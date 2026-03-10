@@ -1,0 +1,13 @@
+{
+  "build": {
+    "builder": "railpack",
+    "commands": [
+      "install-php-extensions gd",
+      "composer install --no-dev --optimize-autoloader",
+      "php artisan key:generate",
+      "php artisan config:cache",
+      "php artisan route:cache"
+    ]
+  },
+  "start": "php artisan serve --host=0.0.0.0 --port=$PORT"
+}
