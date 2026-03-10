@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Notification Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .status {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button.secondary {
+            background: #2196F3;
+        }
+        button.secondary:hover {
+            background: #0b7dda;
+        }
+        button.warning {
+            background: #ff9800;
+        }
+        button.warning:hover {
+            background: #e68900;
+        }
+        .error {
+            color: red;
+            background: #ffebee;
+        }
+        .success {
+            color: green;
+            background: #e8f5e9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Simple Notification Test</h1>
+        
+        <div id="status" class="status">Click "Check Status" to begin...</div>
+        
+        <div>
+            <button onclick="checkStatus()">Check Status</button>
+            <button onclick="requestPermission()" class="secondary">Request Permission</button>
+            <button onclick="testBasicNotification()" class="warning">Test Basic Notification</button>
+            <button onclick="testServiceWorkerNotification()" class="warning">Test SW Notification</button>
+        </div>
+    </div>
+
+    <script>
+        let statusDiv = document.getElementById('status');
+        let swRegistration = null;
+
+        function log(message, isError = false) {
+            console.log(message);
+            const timestamp = new Date().toLocaleTimeString();
+            statusDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            if (isError) {
+                statusDiv.classList.add('error');
+                statusDiv.classList.remove('success');
+            }
+        }
+
+        async function checkStatus() {
+            statusDiv.innerHTML = '';
+            statusDiv.classList.remove('error', 'success');
+            
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            log('📊 NOTIFICATION DIAGNOSTIC REPORT');
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+            // 1. Browser Support
+            log('1️⃣ BROWSER SUPPORT:');
+            if ('Notification' in window) {
+                log('   ✅ Notification API: Supported');
+            } else {
+                log('   ❌ Notification API: NOT SUPPORTED', true);
+                return;
+            }
+
+            if ('serviceWorker' in navigator) {
+                log('   ✅ Service Worker: Supported');
+            } else {
+                log('   ❌ Service Worker: NOT SUPPORTED', true);
+            }
+
+            if ('PushManager' in window) {
+                log('   ✅ Push Manager: Supported');
+            } else {
+                log('   ❌ Push Manager: NOT SUPPORTED', true);
+            }
+
+            // 2. Permission Status
+            log('\n2️⃣ PERMISSION STATUS:');
+            log(`   Current: ${Notification.permission}`);
+            
+            if (Notification.permission === 'granted') {
+                log('   ✅ Permission GRANTED');
+            } else if (Notification.permission === 'denied') {
+                log('   ❌ Permission DENIED by user', true);
+                log('   ⚠️  You must reset site permissions in browser settings');
+                return;
+            } else {
+                log('   ⚠️  Permission not yet requested');
+                log('   👉 Click "Request Permission" button');
+            }
+
+            // 3. Service Worker Status
+            log('\n3️⃣ SERVICE WORKER STATUS:');
+            try {
+                swRegistration = await navigator.serviceWorker.getRegistration();
+                if (swRegistration) {
+                    log('   ✅ Service Worker: Registered');
+                    log(`   State: ${swRegistration.active ? swRegistration.active.state : 'No active worker'}`);
+                    
+                    if (swRegistration.active) {
+                        log(`   Scope: ${swRegistration.scope}`);
+                    }
+                } else {
+                    log('   ⚠️  Service Worker: Not registered');
+                    log('   Attempting to register...');
+                    
+                    try {
+                        swRegistration = await navigator.serviceWorker.register('/service-worker.js');
+                        log('   ✅ Service Worker registered successfully!');
+                        await navigator.serviceWorker.ready;
+                        log('   ✅ Service Worker is ready');
+                    } catch (err) {
+                        log(`   ❌ Failed to register: ${err.message}`, true);
+                        return;
+                    }
+                }
+            } catch (err) {
+                log(`   ❌ Error checking Service Worker: ${err.message}`, true);
+                return;
+            }
+
+            // 4. Push Subscription
+            if (swRegistration) {
+                log('\n4️⃣ PUSH SUBSCRIPTION:');
+                try {
+                    const subscription = await swRegistration.pushManager.getSubscription();
+                    if (subscription) {
+                        log('   ✅ Push Subscription: Active');
+                        log(`   Endpoint: ${subscription.endpoint.substring(0, 50)}...`);
+                    } else {
+                        log('   ⚠️  Push Subscription: Not active');
+                        log('   (This is OK for local testing)');
+                    }
+                } catch (err) {
+                    log(`   ⚠️  Could not check subscription: ${err.message}`);
+                }
+            }
+
+            log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            log('✅ DIAGNOSTIC COMPLETE!');
+            log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            
+            if (Notification.permission === 'granted') {
+                log('\n👉 You can now test notifications!');
+                statusDiv.classList.add('success');
+            }
+        }
+
+        async function requestPermission() {
+            statusDiv.innerHTML = '';
+            log('Requesting notification permission...');
+            
+            try {
+                const permission = await Notification.requestPermission();
+                log(`Permission result: ${permission}`);
+                
+                if (permission === 'granted') {
+                    log('✅ Permission GRANTED! You can now receive notifications.');
+                    statusDiv.classList.add('success');
+                } else if (permission === 'denied') {
+                    log('❌ Permission DENIED. Please reset in browser settings.', true);
+                } else {
+                    log('⚠️  Permission request was dismissed.');
+                }
+            } catch (err) {
+                log(`❌ Error requesting permission: ${err.message}`, true);
+            }
+        }
+
+        async function testBasicNotification() {
+            statusDiv.innerHTML = '';
+            log('Testing BASIC browser notification...\n');
+
+            if (Notification.permission !== 'granted') {
+                log('❌ Permission not granted. Click "Request Permission" first.', true);
+                return;
+            }
+
+            try {
+                const notification = new Notification('🎉 Basic Test Notification', {
+                    body: 'This is a basic browser notification without service worker.',
+                    icon: '/favicon.ico',
+                    tag: 'basic-test-' + Date.now(),
+                    requireInteraction: false
+                });
+
+                log('✅ Basic notification created successfully!');
+                log('Did you see the notification pop up?');
+                statusDiv.classList.add('success');
+
+                notification.onclick = () => {
+                    log('✅ Notification was clicked!');
+                    notification.close();
+                };
+
+                notification.onerror = (err) => {
+                    log(`❌ Notification error: ${err}`, true);
+                };
+
+            } catch (err) {
+                log(`❌ Error creating basic notification: ${err.message}`, true);
+                log(`Error details: ${err.stack}`);
+            }
+        }
+
+        async function testServiceWorkerNotification() {
+            statusDiv.innerHTML = '';
+            log('Testing SERVICE WORKER notification...\n');
+
+            if (Notification.permission !== 'granted') {
+                log('❌ Permission not granted. Click "Request Permission" first.', true);
+                return;
+            }
+
+            try {
+                // Make sure service worker is registered
+                if (!swRegistration) {
+                    log('Registering service worker...');
+                    swRegistration = await navigator.serviceWorker.register('/service-worker.js');
+                    await navigator.serviceWorker.ready;
+                    log('✅ Service Worker ready');
+                }
+
+                const registration = await navigator.serviceWorker.ready;
+                log('Service worker state: ' + (registration.active ? registration.active.state : 'unknown'));
+
+                log('Calling showNotification()...');
+                
+                await registration.showNotification('🚀 Service Worker Test', {
+                    body: 'This notification is sent via Service Worker!',
+                    icon: '/favicon.ico',
+                    badge: '/favicon.ico',
+                    tag: 'sw-test-' + Date.now(),
+                    requireInteraction: false,
+                    vibrate: [200, 100, 200],
+                    actions: [
+                        { action: 'open', title: 'Open' },
+                        { action: 'close', title: 'Close' }
+                    ],
+                    data: {
+                        url: '/',
+                        timestamp: Date.now()
+                    }
+                });
+
+                log('✅ Service Worker notification sent successfully!');
+                log('Did you see the notification pop up?');
+                statusDiv.classList.add('success');
+
+            } catch (err) {
+                log(`❌ Error sending SW notification: ${err.message}`, true);
+                log(`Error details: ${err.stack}`);
+            }
+        }
+
+        // Auto-check status on load
+        window.addEventListener('load', () => {
+            setTimeout(checkStatus, 500);
+        });
+    </script>
+</body>
+</html>

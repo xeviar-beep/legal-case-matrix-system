@@ -1,0 +1,5 @@
+# IMPORTANT: Case Number must be numeric only (e.g., 1001). Use Docket No for alphanumeric identifiers (e.g., G.R. No. 12345)
+Case Number,Docket No,Old Folder No,Case Title,Client Name,Case Type,Section,Court/Agency,Region,Assigned Lawyer,Handling Counsel (NCIP),Date Filed,Deadline Days,Hearing Date,Status,Notes,Actions Taken,Action,Issues/Grounds,Prayers (Relief),New SC No,Remarks
+1001,G.R. No. 12345,OLD-001,Sample Case Title 1,John Doe,Civil,Civil,SC,NCR,Atty. Juan Dela Cruz,Atty. Sample NCIP,2026-01-15,30,2026-03-01,active,Sample notes,Filed pleading,Motion filed,Constitutional issue,For reversal,NEW-SC-001,Sample remarks
+1002,CAR-CV-001,OLD-002,Sample Case Title 2,Jane Smith,Criminal,Criminal,CA,Region I,Atty. Maria Santos,,2026-01-20,45,2026-03-15,active,Sample notes 2,Filed appeal,Appeal filed,Procedural error,For acquittal,,For review
+1003,RTC-001-2026,OLD-003,Sample Case Title 3,ABC Corporation,Labor,Labor,RTC,NCR,Atty. Pedro Reyes,,2026-02-01,60,,active,Sample notes 3,Filed motion,Motion to dismiss,Lack of jurisdiction,Dismiss case,,Pending

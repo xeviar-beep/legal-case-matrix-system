@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Simple Notification Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 100px auto;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 20px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        .info {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            text-align: left;
+        }
+        .info h3 {
+            margin-top: 0;
+        }
+        .status {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-family: monospace;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔔 Notification Test</h1>
+    <p style="font-size: 1.2em;">Click the button to test if notifications work on your computer</p>
+    
+    <button onclick="testNotification()">Test Notification Now!</button>
+    
+    <div class="info">
+        <h3>📋 What This Tests:</h3>
+        <ul>
+            <li>✅ If your browser supports notifications</li>
+            <li>✅ If you've granted permission</li>
+            <li>✅ If Windows notifications are enabled</li>
+            <li>✅ If you can actually see the popup</li>
+        </ul>
+        
+        <div id="status" class="status">
+            Waiting for test...
+        </div>
+    </div>
+
+    <script>
+        let statusDiv = document.getElementById('status');
+
+        function log(message) {
+            console.log(message);
+            statusDiv.innerHTML += message + '\n';
+            statusDiv.scrollTop = statusDiv.scrollHeight;
+        }
+
+        async function testNotification() {
+            statusDiv.innerHTML = '';
+            log('🔍 Starting test...\n');
+
+            // Step 1: Check if browser supports notifications
+            if (!('Notification' in window)) {
+                log('❌ ERROR: Your browser does NOT support notifications');
+                alert('Your browser does not support notifications. Please use Chrome, Edge, or Firefox.');
+                return;
+            }
+            log('✅ Browser supports notifications');
+
+            // Step 2: Check current permission
+            log(`Current permission: ${Notification.permission}`);
+
+            if (Notification.permission === 'denied') {
+                log('\n❌ PROBLEM: You DENIED notification permission!');
+                log('\n📝 How to fix:');
+                log('1. Click the lock icon (🔒) in the address bar');
+                log('2. Find "Notifications" setting');
+                log('3. Change from "Block" to "Allow"');
+                log('4. Refresh this page and try again');
+                alert('⚠️ Notifications are BLOCKED!\n\nClick the lock icon in the address bar and change Notifications to "Allow"');
+                return;
+            }
+
+            // Step 3: Request permission if needed
+            if (Notification.permission === 'default') {
+                log('\n⚠️ Permission not yet requested, asking now...');
+                const permission = await Notification.requestPermission();
+                log(`Permission result: ${permission}`);
+
+                if (permission !== 'granted') {
+                    log('\n❌ You did not grant permission');
+                    alert('You need to click "Allow" for notifications to work!');
+                    return;
+                }
+            }
+
+            log('✅ Permission is GRANTED\n');
+
+            // Step 4: Create and show notification
+            log('🚀 Creating notification NOW...\n');
+            
+            try {
+                const notification = new Notification('✨ SUCCESS! 🎉', {
+                    body: 'If you can see this popup notification, everything is working!\n\nThis should appear in the corner of your screen.',
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><circle cx="50" cy="50" r="40" fill="%23667eea"/><text x="50" y="65" font-size="50" text-anchor="middle" fill="white">✓</text></svg>',
+                    requireInteraction: true,
+                    tag: 'test-' + Date.now()
+                });
+
+                log('✅ Notification object created successfully!');
+                
+                notification.onshow = function() {
+                    log('\n🎉🎉🎉 NOTIFICATION IS SHOWING! 🎉🎉🎉');
+                    log('You should see a popup in the corner of your screen!');
+                };
+
+                notification.onclick = function() {
+                    log('\n👆 You clicked the notification!');
+                    notification.close();
+                    alert('Great! You clicked the notification. Everything is working! ✅');
+                };
+
+                notification.onerror = function(err) {
+                    log('\n❌ ERROR showing notification: ' + err);
+                };
+
+                notification.onclose = function() {
+                    log('\n📪 Notification was closed');
+                };
+
+                log('\n⏳ Waiting for notification to appear...');
+                log('👀 Look at the corners of your screen!');
+                log('📍 Usually appears in the bottom-right corner on Windows\n');
+                
+                // Wait a bit and check if it showed
+                setTimeout(() => {
+                    log('\n❓ Did you see a notification popup?');
+                    log('\nIf NO:');
+                    log('• Check Windows Notifications are ON');
+                    log('• Press Windows + N to open Action Center');
+                    log('• Settings → System → Notifications → ON');
+                    log('• Turn OFF "Focus assist" / "Do Not Disturb"');
+                }, 3000);
+
+            } catch (error) {
+                log('\n❌ ERROR: ' + error.message);
+                alert('Error creating notification: ' + error.message);
+            }
+        }
+
+        // Auto-test on load (with permission first)
+        window.addEventListener('load', function() {
+            log('Page loaded. Click the button to test!');
+            
+            if (Notification.permission === 'granted') {
+                log('\n✅ You already granted permission before.');
+                log('Ready to test notifications!');
+            } else if (Notification.permission === 'denied') {
+                log('\n❌ Notifications are currently BLOCKED');
+                log('You need to reset permissions in browser settings');
+            } else {
+                log('\n⚠️ Permission not yet requested');
+                log('Click the button to request permission');
+            }
+        });
+    </script>
+</body>
+</html>
